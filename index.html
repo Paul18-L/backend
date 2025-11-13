@@ -1,0 +1,245 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+  <meta charset="UTF-8">
+  <title>Café Digital</title>
+  <style>
+    body {
+      font-family: "Poppins", Arial;
+      background: #f8f5f2;
+      margin: 0;
+      padding: 0;
+    }
+
+    header {
+      background: #4b2c20;
+      color: white;
+      text-align: center;
+      padding: 20px;
+    }
+
+    h1 {
+      margin: 0;
+      font-size: 2em;
+    }
+
+    /* === CARRUSEL === */
+    .carousel {
+      position: relative;
+      max-width: 100%;
+      overflow: hidden;
+      height: 250px;
+    }
+
+    .carousel img {
+      width: 100%;
+      height: 250px;
+      object-fit: cover;
+      display: none;
+    }
+
+    .carousel img.active {
+      display: block;
+    }
+
+    .carousel button {
+      position: absolute;
+      top: 50%;
+      transform: translateY(-50%);
+      background: rgba(0, 0, 0, 0.4);
+      border: none;
+      color: white;
+      font-size: 24px;
+      cursor: pointer;
+      padding: 10px;
+      border-radius: 50%;
+    }
+
+    .prev { left: 15px; }
+    .next { right: 15px; }
+
+    main {
+      padding: 20px;
+    }
+
+    .section {
+      margin-bottom: 40px;
+    }
+
+    .menu-item, .empleado {
+      background: white;
+      padding: 15px;
+      border-radius: 10px;
+      box-shadow: 0 2px 5px rgba(0,0,0,0.1);
+      margin: 10px 0;
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+    }
+
+    .menu-item img, .empleado img {
+      width: 80px;
+      height: 80px;
+      border-radius: 10px;
+      object-fit: cover;
+      margin-right: 15px;
+    }
+
+    .menu-info, .empleado-info {
+      flex-grow: 1;
+    }
+
+    button.pedir {
+      background: #4b2c20;
+      color: white;
+      border: none;
+      padding: 8px 15px;
+      border-radius: 5px;
+      cursor: pointer;
+      transition: 0.3s;
+    }
+
+    button.pedir:hover {
+      background: #7a4c33;
+    }
+
+    footer {
+      text-align: center;
+      padding: 15px;
+      background: #4b2c20;
+      color: white;
+      margin-top: 40px;
+    }
+  </style>
+</head>
+<body>
+  <header>
+    <h1>☕ Café Digital</h1>
+    <p>Sabores que inspiran tu código 💻</p>
+  </header>
+
+  <!-- CARRUSEL -->
+  <div class="carousel">
+    <img src="https://images.unsplash.com/photo-1498804103079-a6351b050096" class="active" alt="Café 1">
+    <img src="https://images.unsplash.com/photo-1510626176961-4b57d4fbad03" alt="Café 2">
+    <img src="https://images.unsplash.com/photo-1509042239860-f550ce710b93" alt="Café 3">
+    <img src="https://images.unsplash.com/photo-1551218808-94e220e084d2" alt="Batidos">
+    <button class="prev">&#10094;</button>
+    <button class="next">&#10095;</button>
+  </div>
+
+  <main>
+    <!-- Secciones dinámicas -->
+    <section class="section">
+      <h2>☕ Cafés</h2>
+      <div id="productos"></div>
+    </section>
+
+    <section class="section">
+      <h2>🍰 Postres</h2>
+      <div id="postres"></div>
+    </section>
+
+    <section class="section">
+      <h2>🍳 Desayunos</h2>
+      <div id="desayunos"></div>
+    </section>
+
+    <section class="section">
+      <h2>🥤 Batidos</h2>
+      <div id="batidos"></div>
+    </section>
+
+    <section class="section">
+      <h2>🍦 Helados</h2>
+      <div id="helados"></div>
+    </section>
+
+    <section class="section">
+      <h2>👨‍🍳 Nuestro Equipo</h2>
+      <div id="empleados"></div>
+    </section>
+  </main>
+
+  <footer>
+    © 2025 Café Digital - Todos los derechos reservados
+  </footer>
+
+  <script>
+    // === CARRUSEL INTERACTIVO ===
+    const slides = document.querySelectorAll('.carousel img');
+    let currentSlide = 0;
+
+    function showSlide(index) {
+      slides.forEach((img, i) => img.classList.toggle('active', i === index));
+    }
+
+    document.querySelector('.prev').onclick = () => {
+      currentSlide = (currentSlide - 1 + slides.length) % slides.length;
+      showSlide(currentSlide);
+    };
+
+    document.querySelector('.next').onclick = () => {
+      currentSlide = (currentSlide + 1) % slides.length;
+      showSlide(currentSlide);
+    };
+
+    setInterval(() => {
+      currentSlide = (currentSlide + 1) % slides.length;
+      showSlide(currentSlide);
+    }, 5000);
+
+    // === DATOS DINÁMICOS ===
+    async function cargarDatos() {
+      try {
+        const productosRes = await fetch('/api/productos');
+        const productos = await productosRes.json();
+
+        const empleadosRes = await fetch('/api/empleados');
+        const empleados = await empleadosRes.json();
+
+        // Secciones de productos por categoría
+        const categorias = {
+          café: document.getElementById('productos'),
+          postre: document.getElementById('postres'),
+          desayuno: document.getElementById('desayunos'),
+          batido: document.getElementById('batidos'),
+          helado: document.getElementById('helados')
+        };
+
+        Object.values(categorias).forEach(div => div.innerHTML = '');
+
+        productos.forEach(p => {
+          const categoria = categorias[p.categoria?.toLowerCase()] || categorias.café;
+          categoria.innerHTML += `
+            <div class="menu-item">
+              <img src="https://source.unsplash.com/80x80/?${p.categoria},${p.nombre}" alt="${p.nombre}">
+              <div class="menu-info">
+                <b>${p.nombre}</b><br>
+                Precio: $${p.precio.toFixed(2)}
+              </div>
+              <button class="pedir" onclick="alert('Has pedido un ${p.nombre} ☕')">Pedir</button>
+            </div>`;
+        });
+
+        // Mostrar empleados
+        const divEmpleados = document.getElementById('empleados');
+        divEmpleados.innerHTML = '';
+        empleados.forEach(e => {
+          divEmpleados.innerHTML += `
+            <div class="empleado">
+              <img src="https://source.unsplash.com/80x80/?barista,${e.nombre}" alt="${e.nombre}">
+              <div class="empleado-info">
+                <b>${e.nombre}</b><br>${e.cargo}
+              </div>
+            </div>`;
+        });
+      } catch (error) {
+        console.error('Error al cargar datos:', error);
+      }
+    }
+
+    cargarDatos();
+  </script>
+</body>
+</html>
