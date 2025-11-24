@@ -1,57 +1,103 @@
-const express = require('express');
-const cors = require('cors');
-const path = require('path');
+// server.js
+require('dotenv').config();
+const express = require("express");
+const mongoose = require("mongoose");
+const cors = require("cors");
+const path = require("path");
 
 const app = express();
-
-// === Middlewares ===
-app.use(cors());
 app.use(express.json());
+app.use(cors());
 
-// --- PRODUCTOS ---
-const productos = [
-  { id: 1, nombre: "Capuccino", precio: 2.50, categoria: "Café" },
-  { id: 2, nombre: "Latte", precio: 2.80, categoria: "Café" },
-  { id: 3, nombre: "Espresso", precio: 2.00, categoria: "Café" },
-  { id: 4, nombre: "Brownie", precio: 3.00, categoria: "Postre" },
-  { id: 5, nombre: "Cheesecake", precio: 3.50, categoria: "Postre" },
-  { id: 6, nombre: "Tostadas", precio: 2.20, categoria: "Desayuno" },
-  { id: 7, nombre: "Sandwich", precio: 2.80, categoria: "Desayuno" },
-  { id: 8, nombre: "Batido de Fresa", precio: 2.50, categoria: "Batido" },
-  { id: 9, nombre: "Batido de Chocolate", precio: 2.70, categoria: "Batido" },
-  { id: 10, nombre: "Helado de Vainilla", precio: 1.80, categoria: "Helado" },
-  { id: 11, nombre: "Helado de Fresa", precio: 1.90, categoria: "Helado" }
-];
+// Servir frontend
+app.use(express.static("public"));  // <<--- ESTA LÍNEA ES LA SOLUCIÓN
 
-// --- EMPLEADOS ---
-const empleados = [
-  { id: 1, nombre: "Ana Torres", cargo: "Barista Principal" },
-  { id: 2, nombre: "Luis Gómez", cargo: "Cocinero" },
-  { id: 3, nombre: "María López", cargo: "Repostera" },
-  { id: 4, nombre: "Pedro Ruiz", cargo: "Cajero" }
-];
+// ---------------------------
+//  Conexión a MongoDB Atlas
+// ---------------------------
+mongoose
+  .connect(process.env.MONGO_URI)
+  .then(() => console.log(" Conectado a MongoDB Atlas"))
+  .catch((err) => console.error(" Error conectando a MongoDB:", err));
 
-
-// Obtener todos los productos
-app.get('/api/productos', (req, res) => {
-  res.json(productos);
+// ---------------------------
+//   Modelo (Productos)
+// ---------------------------
+const productSchema = new mongoose.Schema({
+  nombre: { type: String, required: true },
+  precio: { type: Number, required: true },
+  categoria: { type: String, required: true },
+imagen :{type:String}
 });
 
-// Obtener todos los empleados
-app.get('/api/empleados', (req, res) => {
-  res.json(empleados);
+const Producto = mongoose.model("Producto", productSchema);
+
+// --------------------------------
+//   RUTAS CRUD - API REST
+// --------------------------------
+app.get("/api/productos", async (req, res) => {
+  try {
+    const productos = await Producto.find();
+    res.status(200).json(productos);
+  } catch (error) {
+    res.status(500).json({ message: "Error al obtener productos" });
+  }
 });
 
-
-// Sirve todos los archivos de la carpeta actual (incluyendo index.html)
-app.use(express.static(path.join(__dirname)));
-
-// Cuando el usuario entra a la raíz "/", enviamos el index.html
-app.get('/', (req, res) => {
-  res.sendFile(path.join(__dirname, 'index.html'));
+app.get("/api/productos/:id", async (req, res) => {
+  try {
+    const producto = await Producto.findById(req.params.id);
+    if (!producto) return res.status(404).json({ message: "No encontrado" });
+    res.status(200).json(producto);
+  } catch (error) {
+    res.status(400).json({ message: "ID inválido" });
+  }
 });
 
+app.post("/api/productos", async (req, res) => {
+  try {
+    const nuevo = new Producto(req.body);
+    await nuevo.save();
+    res.status(201).json(nuevo);
+  } catch (error) {
+    res.status(400).json({ message: "Error al crear producto" });
+  }
+});
+
+app.put("/api/productos/:id", async (req, res) => {
+  try {
+    const actualizado = await Producto.findByIdAndUpdate(
+      req.params.id,
+      req.body,
+      { new: true }
+    );
+    if (!actualizado)
+      return res.status(404).json({ message: "Producto no encontrado" });
+
+    res.status(200).json(actualizado);
+  } catch (error) {
+    res.status(400).json({ message: "Error al actualizar" });
+  }
+});
+
+app.delete("/api/productos/:id", async (req, res) => {
+  try {
+    const eliminado = await Producto.findByIdAndDelete(req.params.id);
+    if (!eliminado)
+      return res.status(404).json({ message: "No encontrado" });
+
+    res.status(200).json({ message: "Producto eliminado" });
+  } catch (error) {
+    res.status(400).json({ message: "Error al eliminar" });
+  }
+});
+
+// ---------------------------
+//  Servidor
+// ---------------------------
 const PORT = 3000;
+// Servir archivos estáticos (frontend)
+app.use(express.static(path.join(__dirname, "public")));
 app.listen(PORT, () => {
-  console.log(`☕ Servidor Café Digital corriendo en http://localhost:${PORT}`);
+  console.log(` Servidor corriendo en http://localhost:${PORT}`);
 });

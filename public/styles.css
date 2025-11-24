@@ -1,0 +1,17 @@
+body {
+      background: #f7f4f1;
+      }
+      .list-group-item {
+        display: flex;
+          gap: 10px;
+            align-items: center;
+            }
+            .product-thumb {
+              width: 80px;
+                height: 80px;
+                  object-fit: cover;
+                    border-radius: 8px;
+                    }
+                    .product-info {
+                      flex: 1;
+                      }
