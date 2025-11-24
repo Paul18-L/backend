@@ -19,6 +19,6 @@ Aplicación web completa para la gestión del menú de **Café Digital**. Incluy
 - MongoDB Atlas (o MongoDB local)
 
 ## Instalación y ejecución (Backend)
-1. Ir a la carpeta `backend`:
-   ```bash
-   cd backend 
+git clone https://github.com/Paul18-L/cafedigital
+cd cafedigital 
+
